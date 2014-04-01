@@ -29,21 +29,41 @@ class Exchange
 	}
 	
 	public function getRate($stockSymbol = null) {
-		# http://download.finance.yahoo.com/d/quotes.csv?s=%40%5EDJI,GOOG&f=nsl1op&e=.csv // <- example
+		if ($this->isOpen()) {
+			$yahooConn = fopen('http://download.finance.yahoo.com/d/quotes.csv?s=%40%5EDJI'. $this->prepareStatement($stockSymbol) .'&f=nsl1op&e=.csv', 'r');
+			
+			if (is_null($stockSymbol)) {
+				$stockRates = array();
+				while ($stockData = fgetcsv($yahooCon, 9999, ',') !== false) {
+					if ($this->seemsLegit($stockData)) {
+						$stockRates[$stockData[1]] = $stockData[2];
+					}
+				}
+				return $stockRates;
+			} else {
+				$stockData = fgetcsv($yahooCon, 9999, ',');
+				if ($this->seemsLegit($stockData)) {
+					return $stockData[2];
+				}
+			}
+		}
+	}
+	
+	public function seemsLegit($stockData) {
+		return true; # @todo check stock-data for sanity
 	}
 	
 	private function prepareStatement($stockSymbol = null) {
-		if ($this->isOpen()) {
-			if (is_null($stockSymbol)) {
-				foreach ($this->exchangeStocks as $curStock) {
-					
-				}
-			} else {
-				
+		$preparedStatement = null;
+		
+		if (is_null($stockSymbol)) {
+			foreach ($this->exchangeStocks as $stockSymbol => $curStock) {
+				$preparedStatement .= ','. $stockSymbol .'.'. $this->exchangeMarket;
 			}
 		} else {
-			
+			$preparedStatement = ','. $stockSymbol .'.'. $this->exchangeMarket;
 		}
+		return $preparedStatement;
 	}
 	
 	private function loadStocks() {
