@@ -67,7 +67,7 @@ class Exchange
 	}
 	
 	private function loadStocks() {
-		$stockQuery = DB::get()->query('SELECT stock_symbol FROM vs_stock vst LEFT JOIN vs_stock_exchange vse ON vse.stock_symbol = vst.stock_symbol WHERE .....'); # @todo need to write this code
+		$stockQuery = DB::get()->query("SELECT stock_symbol FROM vs_stock_exchange WHERE stock_exchange = '%s'", $this->exchangeMarket);
 		while ($curStock = $stockQuery->fetch_assocs()) {
 			$this->exchangeStocks[$curStock['stock_symbol']] = new Stock($curStock['stock_symbol']);
 		}
