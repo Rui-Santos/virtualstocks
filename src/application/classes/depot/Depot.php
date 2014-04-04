@@ -26,6 +26,15 @@ class Depot
 		return $this->depotNumber;
 	}
 	
+	public function addStock(Stock $stock, $stockAmount = 1) {
+		$stockQuery = DB::get()->query("SELECT COUNT(*) AS exists FROM vs_depot_stock WHERE depot_number = %d AND stock_symbol = '%s'", $this->depotNumber, $stock->getSymbol());
+		if($stockQuery->fetch_value() == 1) {
+			DB::get()->query("UPDATE vs_depot_stock SET stock_amount = stock_amount + %d WHERE stock_symbol = '%s' AND depot_number = %d", $stockAmount, $stock->getSymbol(), $this->depotNumber);
+		} else {
+			DB::get()->query("INSERT INTO vs_depot_stock(depot_number, stock_symbol, stock_amount) VALUES(%d, '%s', %d)", $this->depotNumber, $stock->getSymbol(), $stockAmount);
+		}
+	}
+
 	public function withdrawMoney($withdrawSum, $currency) {
 		if ($currency != Forex::FOREX_EUR) {
 			$withdrawSum = round($withdrawSum / Forex::getExchange($currency, Forex::FOREX_EUR), 4);
@@ -35,7 +44,7 @@ class Depot
 			DB::get()->query("UPDATE vs_depot SET depot_balance = depot_balance - %d WHERE depot_number = %d", $withdrawSum, $this->depotNumber);
 			$this->depotBalance -= $withdrawSum;
 		} else {
-			# @todo impl. error handling (not enough money)
+			throw new DepotException('You do not have enough money to perform this action!');
 		}
 	}
 	
